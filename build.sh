@@ -106,7 +106,7 @@ cd ..
 
 echo "info: building kernel..."
 
-LTO=thin OUT_DIR="$OLDDIR/android-kernel/out" BUILD_CONFIG=common/build.config.gki.aarch64 KBUILD_BUILD_USER="tekqshi" KBUILD_BUILD_HOST="808kernel" build/build.sh -j"$(nproc)"
+LTO=thin OUT_DIR="$OLDDIR/android-kernel/out" BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh -j"$(nproc)"
 
 OUT_PATH=$(find "$OLDDIR/android-kernel/out" -name "Image" -type f | head -1)
 [[ -z "$OUT_PATH" ]] && {
@@ -139,6 +139,7 @@ case \\\$(uname -r) in\\
 	$VERSION.$PATCHLEVEL.*) ;;\\
 	*) echo \"Not supported\"; exit 1 ;;\\
 esac
+
 
 " "$AK3_DIR/anykernel.sh"
 
