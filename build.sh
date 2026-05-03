@@ -161,6 +161,29 @@ SERVER="${GITHUB_SERVER_URL:-https://github.com}"
 WORKFLOW_URL="$SERVER/$REPO/actions/runs/${GITHUB_RUN_ID:-0}"
 COMMIT_URL="$SERVER/$REPO/commit/$COMMIT_SHA"
 
+escape_md() {
+  printf '%s' "$1" | sed \
+    -e 's/\\/\\\\/g' \
+    -e 's/_/\\_/g' \
+    -e 's/\*/\\*/g' \
+    -e 's/`/\\`/g' \
+    -e 's/\[/\\[/g' \
+    -e 's/\]/\\]/g' \
+    -e 's/(/\\(/g' \
+    -e 's/)/\\)/g' \
+    -e 's/\./\\./g' \
+    -e 's/!/\\!/g' \
+    -e 's/-/\\-/g' \
+    -e 's/|/\\|/g' \
+    -e 's/{/\\{/g' \
+    -e 's/}/\\}/g' \
+    -e 's/+/\\+/g' \
+    -e 's/=/\\=/g' \
+    -e 's/</\\</g' \
+    -e 's/>/\\>/g' \
+    -e 's/#/\\#/g'
+}
+
 BRANCH_ESCAPED=$(escape_md "$BRANCH_NAME@$SHORT_SHA")
 COMMIT_MSG_ESCAPED=$(escape_md "$COMMIT_MSG")
 WORKFLOW_URL_ESCAPED=$(escape_md "$WORKFLOW_URL")
