@@ -22,3 +22,18 @@ jobs:
         run: |
           chmod +x build.sh
           ./build.sh
+
+      - name: send
+        uses: appleboy/telegram-action@master
+        with:
+          to: -100${{ secrets.CHAT_ID }}
+          token: ${{ secrets.BOT_TOKEN }}
+          document: ${{ steps.build.outputs.zip_file }}
+          format: html
+          filename: ${{ steps.build.outputs.artifact_name }}.zip
+          message: |
+            <b>Branch:</b> ${{ github.ref_name }}@${{ github.sha[0:8] }}
+            <b>#ci_${{ github.run_number }}</b>
+            <pre>${{ github.event.head_commit.message }}</pre>
+            <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Workflow</a>
+            <a href="${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}">Commit</a>

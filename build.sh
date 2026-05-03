@@ -151,56 +151,5 @@ cd "$ARTIFACT_DIR"
 zip -r "$ZIP_FILE" . -x "*.git*" > /dev/null
 cd "$OLDDIR"
 
-BRANCH_NAME="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')}"
-COMMIT_SHA="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
-SHORT_SHA="${COMMIT_SHA:0:7}"
-CI_NUMBER="${GITHUB_RUN_NUMBER:-1}"
-COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -1)
-REPO="${GITHUB_REPOSITORY:-unknown}"
-SERVER="${GITHUB_SERVER_URL:-https://github.com}"
-WORKFLOW_URL="$SERVER/$REPO/actions/runs/${GITHUB_RUN_ID:-0}"
-COMMIT_URL="$SERVER/$REPO/commit/$COMMIT_SHA"
-
-escape_md() {
-  printf '%s' "$1" | sed \
-    -e 's/\\/\\\\/g' \
-    -e 's/_/\\_/g' \
-    -e 's/\*/\\*/g' \
-    -e 's/`/\\`/g' \
-    -e 's/\[/\\[/g' \
-    -e 's/\]/\\]/g' \
-    -e 's/(/\\(/g' \
-    -e 's/)/\\)/g' \
-    -e 's/\./\\./g' \
-    -e 's/!/\\!/g' \
-    -e 's/-/\\-/g' \
-    -e 's/|/\\|/g' \
-    -e 's/{/\\{/g' \
-    -e 's/}/\\}/g' \
-    -e 's/+/\\+/g' \
-    -e 's/=/\\=/g' \
-    -e 's/</\\</g' \
-    -e 's/>/\\>/g' \
-    -e 's/#/\\#/g'
-}
-
-BRANCH_ESCAPED=$(escape_md "$BRANCH_NAME@$SHORT_SHA")
-COMMIT_MSG_ESCAPED=$(escape_md "$COMMIT_MSG")
-WORKFLOW_URL_ESCAPED=$(escape_md "$WORKFLOW_URL")
-COMMIT_URL_ESCAPED=$(escape_md "$COMMIT_URL")
-CI_ESCAPED=$(escape_md "#ci_$CI_NUMBER")
-
-ESCAPED_CAPTION="Branch: $BRANCH_ESCAPED
-$CI_ESCAPED
-\`\`\`
-$COMMIT_MSG_ESCAPED
-\`\`\`
-
-[Workflow]($WORKFLOW_URL_ESCAPED)
-[Commit]($COMMIT_URL_ESCAPED)"
-
-curl -F "chat_id=-100$CHAT_ID" \
-     -F "document=@$ZIP_FILE;filename=$ARTIFACT_NAME.zip" \
-     -F "parse_mode=MarkdownV2" \
-     -F "caption=$ESCAPED_CAPTION" \
-     "https://api.telegram.org/bot$TOKEN/sendDocument"
+echo "artifact_name=AK3-${KERNEL_UNAME}" >> $GITHUB_OUTPUT
+echo "zip_file=${ZIP_FILE}" >> "$GITHUB_OUTPUT"
