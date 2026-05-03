@@ -152,26 +152,45 @@ zip -r "$ZIP_FILE" . -x "*.git*" > /dev/null
 cd "$OLDDIR"
 
 BRANCH_NAME="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')}"
+COMMIT_SHA="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
+SHORT_SHA="${COMMIT_SHA:0:7}"
 CI_NUMBER="${GITHUB_RUN_NUMBER:-1}"
 COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -1)
-WORKFLOW_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-0}"
+REPO="${GITHUB_REPOSITORY:-unknown}"
+SERVER="${GITHUB_SERVER_URL:-https://github.com}"
+WORKFLOW_URL="$SERVER/$REPO/actions/runs/${GITHUB_RUN_ID:-0}"
+COMMIT_URL="$SERVER/$REPO/commit/$COMMIT_SHA"
 
 CAPTION=$(cat <<EOF
-Branch: $BRANCH_NAME
+Branch: $BRANCH_NAME@$SHORT_SHA
 #ci_$CI_NUMBER
-
 \`\`\`
 $COMMIT_MSG
 \`\`\`
 
 [Workflow]($WORKFLOW_URL)
+[Commit]($COMMIT_URL)
 EOF
 )
 
-ESCAPED_CAPTION=$(printf '%s' "$CAPTION" | sed -e 's/\\/\\\\/g' -e 's/\[/\\[/g' -e 's/\]/\\]/g' -e 's/(/\\(/g' -e 's/)/\\)/g' -e 's/~/\~/g' -e 's/`/\\`/g' -e 's/_/\\_/g' -e 's/|/\\|/g' -e 's/{/\\{/g' -e 's/}/\\}/g' -e 's/#/\\#/g' -e 's/\./\\./g' -e 's/!/\\!/g' -e 's/*/\\*/g' -e 's/+/\\+/g' -e 's/-/\\-/g' -e 's/=/\\=/g' -e 's/&/\\&/g')
+ESCAPED_CAPTION=$(printf '%s' "$CAPTION" | sed \
+  -e 's/\\/\\\\/g' \
+  -e 's/\./\\./g' \
+  -e 's/!/\\!/g' \
+  -e 's/-/\\-/g' \
+  -e 's/|/\\|/g' \
+  -e 's/{/\\{/g' \
+  -e 's/}/\\}/g' \
+  -e 's/(/\\(/g' \
+  -e 's/)/\\)/g' \
+  -e 's/+/\\+/g' \
+  -e 's/=/\\=/g' \
+  -e 's/</\\</g' \
+  -e 's/>/\\>/g' \
+  -e 's/#/\\#/g')
 
 curl -F "chat_id=-100$CHAT_ID" \
-     -F "document=@$ZIP_FILE" \
+     -F "document=@$ZIP_FILE;filename=$ARTIFACT_NAME.zip" \
      -F "parse_mode=MarkdownV2" \
      -F "caption=$ESCAPED_CAPTION" \
      "https://api.telegram.org/bot$TOKEN/sendDocument"
