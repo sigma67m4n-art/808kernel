@@ -151,28 +151,15 @@ cd "$ARTIFACT_DIR"
 zip -r "$ZIP_FILE" . -x "*.git*" > /dev/null
 cd "$OLDDIR"
 
-escape_md() {
-  printf '%s' "$1" | sed \
-    -e 's/\\/\\\\/g' \
-    -e 's/_/\\_/g' \
-    -e 's/\*/\\*/g' \
-    -e 's/`/\\`/g' \
-    -e 's/\[/\\[/g' \
-    -e 's/\]/\\]/g' \
-    -e 's/(/\\(/g' \
-    -e 's/)/\\)/g' \
-    -e 's/\./\\./g' \
-    -e 's/!/\\!/g' \
-    -e 's/-/\\-/g' \
-    -e 's/|/\\|/g' \
-    -e 's/{/\\{/g' \
-    -e 's/}/\\}/g' \
-    -e 's/+/\\+/g' \
-    -e 's/=/\\=/g' \
-    -e 's/</\\</g' \
-    -e 's/>/\\>/g' \
-    -e 's/#/\\#/g'
-}
+BRANCH_NAME="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')}"
+COMMIT_SHA="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo 'unknown')}"
+SHORT_SHA="${COMMIT_SHA:0:7}"
+CI_NUMBER="${GITHUB_RUN_NUMBER:-1}"
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -1)
+REPO="${GITHUB_REPOSITORY:-unknown}"
+SERVER="${GITHUB_SERVER_URL:-https://github.com}"
+WORKFLOW_URL="$SERVER/$REPO/actions/runs/${GITHUB_RUN_ID:-0}"
+COMMIT_URL="$SERVER/$REPO/commit/$COMMIT_SHA"
 
 BRANCH_ESCAPED=$(escape_md "$BRANCH_NAME@$SHORT_SHA")
 COMMIT_MSG_ESCAPED=$(escape_md "$COMMIT_MSG")
