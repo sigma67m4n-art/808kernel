@@ -25,7 +25,6 @@ jobs:
           ./build.sh
 
       - name: upload anykernel3
-        if: ${{ inputs.anykernel3 }}
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.anykernel3_name }}
