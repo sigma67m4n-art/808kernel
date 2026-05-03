@@ -153,7 +153,7 @@ cd "$OLDDIR"
 
 BRANCH_NAME="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')}"
 CI_NUMBER="${GITHUB_RUN_NUMBER:-1}"
-COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -1 | sed 's/[][!_*()\-+~`]//g')
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -1 | tr -d '!_\*()\-+~`[]')
 WORKFLOW_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-0}"
 
 CAPTION=$(cat <<EOF
