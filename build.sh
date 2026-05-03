@@ -153,11 +153,22 @@ cd "$OLDDIR"
 
 BRANCH_NAME="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')}"
 CI_NUMBER="${GITHUB_RUN_NUMBER:-1}"
-COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | head -1 | sed 's/[][!_*()\-+~`]//g')
 WORKFLOW_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-0}"
+
+CAPTION=$(cat <<EOF
+Branch: $BRANCH_NAME
+#ci_$CI_NUMBER
+\`\`\`
+$COMMIT_MSG
+\`\`\`
+
+[Workflow]($WORKFLOW_URL)
+EOF
+)
 
 curl -F "chat_id=-100$CHAT_ID" \
      -F "document=@$ZIP_FILE" \
-     -F "caption=Branch: $BRANCH_NAME%0A#ci_$CI_NUMBER%0A%0A\`\`\`%0A$COMMIT_MSG%0A\`\`\`%0A%0A[Workflow]($WORKFLOW_URL)" \
-     -F "parse_mode=Markdown" \
+     -F "parse_mode=MarkdownV2" \
+     -F "caption=$CAPTION" \
      "https://api.telegram.org/bot$TOKEN/sendDocument"
