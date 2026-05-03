@@ -17,16 +17,7 @@ jobs:
           KERNELSU: "https://github.com/ReSukiSU/ReSukiSU"
           KERNELSU_BRANCH: "main"
           SUSFS: "1"
-          KPM: "0"
           PATCH_FILE: "clean_uname.patch ondemand_tune.patch"
-          ANYKERNEL3: "0"
         run: |
           chmod +x build.sh
           ./build.sh
-
-      - name: upload anykernel3
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ steps.build.outputs.anykernel3_name }}
-          path: ${{ steps.build.outputs.anykernel3_path }}
-          compression-level: 9

@@ -7,9 +7,9 @@ set -euo pipefail
 }
 
 if [ -n "$GITHUB_SHA" ]; then
-    SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-8)
+	SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-8)
 else
-    SHORT_SHA=$(git rev-parse --short=8 HEAD 2>/dev/null || echo "local")
+	SHORT_SHA=$(git rev-parse --short=8 HEAD 2>/dev/null || echo "local")
 fi
 
 LOCALVERSION="-808kernel-susfs/$SHORT_SHA"
@@ -17,8 +17,6 @@ CONFIG_NAME="${CONFIG_NAME:-}"
 KERNELSU="${KERNELSU:-}"
 KERNELSU_BRANCH="${KERNELSU_BRANCH:-}"
 SUSFS="${SUSFS:-}"
-KPM="${KPM:-}"
-ANYKERNEL3="${ANYKERNEL3:-}"
 
 OLDDIR="$(pwd)"
 DEFCONFIG="arch/arm64/configs/gki_defconfig"
@@ -102,25 +100,6 @@ if [[ -n "$SUSFS" ]]; then
 	fi
 fi
 
-if [[ -n "$KPM" && "$KPM" == "1" ]]; then
-	echo "info: applying KPM config..."
-
-	if [[ -z "$KERNELSU" ]]; then
-		echo "warning: KPM requires KERNELSU to be set, skipping..."
-	else
-		kpm_add_config() {
-			local key="$1" val="$2"
-			if grep -qE "^${key}=|^# ${key} is not set" "$DEFCONFIG"; then
-				echo "info: KPM: $key already present, skipping"
-			else
-				echo "${key}=${val}" >>"$DEFCONFIG"
-			fi
-		}
-
-		kpm_add_config CONFIG_KPM y
-	fi
-fi
-
 sed -i 's/check_defconfig//' build.config.gki
 
 cd ..
@@ -136,38 +115,26 @@ OUT_PATH=$(find "$OLDDIR/android-kernel/out" -name "Image" -type f | head -1)
 }
 OUT_DIR="$(dirname "$OUT_PATH")"
 
-if [[ "$KPM" == "1" || "$KPM" == "true" && -n "$KERNELSU" ]]; then
-	echo "info: patching Image with patch_linux (KPM)..."
-	cd "$OUT_DIR"
-	curl -LSs "https://raw.githubusercontent.com/ShirkNeko/SukiSU_patch/refs/heads/main/kpm/patch_linux" -o patch_linux
-	chmod 755 patch_linux
-	./patch_linux
-	rm -f Image
-	mv oImage Image
-	cd "$OLDDIR"
-fi
-
 change_kernel_string() {
 	sed -i "s/kernel.string=.*/kernel.string=$1/" "$2"
 }
 
-if [[ "$ANYKERNEL3" == "1" || "$ANYKERNEL3" == "true" ]]; then
-	echo "info: packaging with AnyKernel3..."
+echo "info: packaging with AnyKernel3..."
 
-	AK3_DIR="$OLDDIR/anykernel3"
-	[[ ! -d "$AK3_DIR" ]] && {
-		echo "error: anykernel3 folder not found at $AK3_DIR"
-		exit 1
-	}
+AK3_DIR="$OLDDIR/anykernel3"
+[[ ! -d "$AK3_DIR" ]] && {
+	echo "error: anykernel3 folder not found at $AK3_DIR"
+	exit 1
+}
 
-	cp "$OUT_DIR/Image" "$AK3_DIR/Image"
+cp "$OUT_DIR/Image" "$AK3_DIR/Image"
 
-	KERNEL_UNAME="$VERSION.$PATCHLEVEL.$SUBLEVEL${LOCALVERSION:+$LOCALVERSION}"
-	ARTIFACT_NAME="AK3-$KERNEL_UNAME"
+KERNEL_UNAME="$VERSION.$PATCHLEVEL.$SUBLEVEL${LOCALVERSION:+$LOCALVERSION}"
+ARTIFACT_NAME="AK3-$KERNEL_UNAME"
 
-	change_kernel_string "$KERNEL_UNAME" "$AK3_DIR/anykernel.sh"
+change_kernel_string "$KERNEL_UNAME" "$AK3_DIR/anykernel.sh"
 
-	sed -i "/# boot install/i\\
+sed -i "/# boot install/i\\
 case \\\$(uname -r) in\\
 	$VERSION.$PATCHLEVEL.*) ;;\\
 	*) echo \"Not supported\"; exit 1 ;;\\
@@ -175,13 +142,16 @@ esac
 
 " "$AK3_DIR/anykernel.sh"
 
-	ARTIFACT_DIR="$OLDDIR/$ARTIFACT_NAME"
-	mkdir -p "$ARTIFACT_DIR"
+ARTIFACT_DIR="$OLDDIR/$ARTIFACT_NAME"
+mkdir -p "$ARTIFACT_DIR"
 
-	cp -r "$AK3_DIR"/* "$ARTIFACT_DIR/"
+cp -r "$AK3_DIR"/* "$ARTIFACT_DIR/"
 
-	echo "anykernel3_path=$ARTIFACT_DIR" >>"$GITHUB_OUTPUT"
-	echo "anykernel3_name=$ARTIFACT_NAME" >>"$GITHUB_OUTPUT"
-fi
+ZIP_FILE="$OLDDIR/$ARTIFACT_NAME.zip"
+cd "$ARTIFACT_DIR"
+zip -r "$ZIP_FILE" .
+cd "$OLDDIR"
 
-echo "out_path=$OUT_DIR" >>"$GITHUB_OUTPUT"
+curl -F "chat_id=${{ secrets.CHAT_ID }}" \
+	 -F "document=@$ZIP_FILE" \
+	 "https://api.telegram.org/bot${{ secrets.TOKEN }}/sendDocument"
