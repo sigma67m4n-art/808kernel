@@ -1,0 +1,34 @@
+name: build kernel
+on:
+  workflow_dispatch:
+  push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: build kernel
+        id: build
+        env:
+          KERNEL_BRANCH: "common-android12-5.10-lts"
+          LOCALVERSION: "-808kernel/${{ github.sha }}"
+          CONFIG_NAME: "main_config.cfg"
+          KERNELSU: "https://github.com/ReSukiSU/ReSukiSU"
+          KERNELSU_BRANCH: "main"
+          SUSFS: "1"
+          KPM: "0"
+          PATCH_FILE: "clean_uname.patch ondemand_tune.patch"
+          ANYKERNEL3: "0"
+        run: |
+          chmod +x build.sh
+          ./build.sh
+
+      - name: upload anykernel3
+        if: ${{ inputs.anykernel3 }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.anykernel3_name }}
+          path: ${{ steps.build.outputs.anykernel3_path }}
+          compression-level: 9
