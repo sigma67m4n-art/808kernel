@@ -116,7 +116,7 @@ OUT_PATH=$(find "$OLDDIR/android-kernel/out" -name "Image" -type f | head -1)
 OUT_DIR="$(dirname "$OUT_PATH")"
 
 change_kernel_string() {
-	sed -i "s/kernel.string=.*/kernel.string=$1/" "$2"
+	sed -i "s|kernel.string=.*|kernel.string=$1|" "$2"
 }
 
 echo "info: packaging with AnyKernel3..."
