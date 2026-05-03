@@ -6,7 +6,13 @@ set -euo pipefail
 	exit 1
 }
 
-LOCALVERSION="${LOCALVERSION:-}"
+if [ -n "$GITHUB_SHA" ]; then
+    SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-8)
+else
+    SHORT_SHA=$(git rev-parse --short=8 HEAD 2>/dev/null || echo "local")
+fi
+
+LOCALVERSION="-808kernel-susfs/$SHORT_SHA"
 CONFIG_NAME="${CONFIG_NAME:-}"
 KERNELSU="${KERNELSU:-}"
 KERNELSU_BRANCH="${KERNELSU_BRANCH:-}"
@@ -120,7 +126,8 @@ sed -i 's/check_defconfig//' build.config.gki
 cd ..
 
 echo "info: building kernel..."
-LTO=thin OUT_DIR="$OLDDIR/android-kernel/out" BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh -j"$(nproc)"
+
+LTO=thin OUT_DIR="$OLDDIR/android-kernel/out" BUILD_CONFIG=common/build.config.gki.aarch64 KBUILD_BUILD_USER="tekqshi" KBUILD_BUILD_HOST="808kernel" build/build.sh -j"$(nproc)"
 
 OUT_PATH=$(find "$OLDDIR/android-kernel/out" -name "Image" -type f | head -1)
 [[ -z "$OUT_PATH" ]] && {

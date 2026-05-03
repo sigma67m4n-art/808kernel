@@ -13,7 +13,6 @@ jobs:
         id: build
         env:
           KERNEL_BRANCH: "common-android12-5.10-lts"
-          LOCALVERSION: "-808kernel/${{ github.sha }}"
           CONFIG_NAME: "main_config.cfg"
           KERNELSU: "https://github.com/ReSukiSU/ReSukiSU"
           KERNELSU_BRANCH: "main"
