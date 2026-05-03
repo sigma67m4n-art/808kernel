@@ -54,12 +54,10 @@ fi
 export PATH="$CLANG_DIR/bin:$PATH"
 echo "info: using $(clang --version | head -1)"
 
-if [[ -n "${PATCH_FILE:-}" ]]; then
-	echo "info: applying patches..."
-	for i in $PATCH_FILE; do
-		patch -p1 <"$OLDDIR/patch/$i"
-	done
-fi
+echo "info: applying patches..."
+for i in "$OLDDIR"/patch/*; do
+    patch -p1 < "$i"
+done
 
 if [[ -n "$CONFIG_NAME" ]]; then
 	echo "info: applying config..."
@@ -150,9 +148,16 @@ cp -r "$AK3_DIR"/* "$ARTIFACT_DIR/"
 
 ZIP_FILE="$OLDDIR/$ARTIFACT_NAME.zip"
 cd "$ARTIFACT_DIR"
-zip -r "$ZIP_FILE" .
+zip -r "$ZIP_FILE" . -x "*.git*" > /dev/null
 cd "$OLDDIR"
+
+BRANCH_NAME="${GITHUB_REF_NAME:-$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'unknown')}"
+CI_NUMBER="${GITHUB_RUN_NUMBER:-1}"
+COMMIT_MSG=$(git log -1 --pretty=%B 2>/dev/null | sed ':a;N;$!ba;s/\n/\\n/g' | sed 's/"/\\"/g')
+WORKFLOW_URL="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-unknown}/actions/runs/${GITHUB_RUN_ID:-0}"
 
 curl -F "chat_id=-100$CHAT_ID" \
      -F "document=@$ZIP_FILE" \
+     -F "caption=Branch: $BRANCH_NAME%0A#ci_$CI_NUMBER%0A%0A\`\`\`%0A$COMMIT_MSG%0A\`\`\`%0A%0A[Workflow]($WORKFLOW_URL)" \
+     -F "parse_mode=Markdown" \
      "https://api.telegram.org/bot$TOKEN/sendDocument"
