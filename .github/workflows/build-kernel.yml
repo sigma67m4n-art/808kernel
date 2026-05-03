@@ -18,6 +18,8 @@ jobs:
           KERNELSU_BRANCH: "main"
           SUSFS: "1"
           PATCH_FILE: "clean_uname.patch ondemand_tune.patch"
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          TOKEN: ${{ secrets.TOKEN }}
         run: |
           chmod +x build.sh
           ./build.sh
