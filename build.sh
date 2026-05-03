@@ -152,6 +152,6 @@ cd "$ARTIFACT_DIR"
 zip -r "$ZIP_FILE" .
 cd "$OLDDIR"
 
-curl -F "chat_id=$CHAT_ID" \
+curl -F "chat_id=-100$CHAT_ID" \
      -F "document=@$ZIP_FILE" \
      "https://api.telegram.org/bot$TOKEN/sendDocument"
