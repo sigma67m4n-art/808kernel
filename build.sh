@@ -56,7 +56,7 @@ echo "info: using $(clang --version | head -1)"
 
 echo "info: applying patches..."
 for i in "$OLDDIR"/patch/*; do
-    patch -p1 < "$i"
+    patch --batch -p1 < "$i" || true
 done
 
 if [[ -n "$CONFIG_NAME" ]]; then
