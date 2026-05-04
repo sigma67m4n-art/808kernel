@@ -9,6 +9,7 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@v4
+
       - name: build kernel
         id: build
         env:
@@ -23,16 +24,18 @@ jobs:
           chmod +x build.sh
           ./build.sh
 
+      - name: short sha
+        run: echo "SHORT_SHA=${GITHUB_SHA::8}" >> $GITHUB_ENV
+
       - name: send
         uses: appleboy/telegram-action@master
         with:
           to: -100${{ secrets.CHAT_ID }}
-          token: ${{ secrets.BOT_TOKEN }}
+          token: ${{ secrets.TOKEN }}
           document: ${{ steps.build.outputs.zip_file }}
           format: html
-          filename: ${{ steps.build.outputs.artifact_name }}.zip
           message: |
-            <b>Branch:</b> ${{ github.ref_name }}@${{ github.sha[0:8] }}
+            <b>Branch:</b> ${{ github.ref_name }}@${{ env.SHORT_SHA }}
             <b>#ci_${{ github.run_number }}</b>
             <pre>${{ github.event.head_commit.message }}</pre>
             <a href="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}">Workflow</a>
