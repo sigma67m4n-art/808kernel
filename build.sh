@@ -117,6 +117,10 @@ cd ..
 
 echo "info: building kernel..."
 
+KBUILD_BUILD_USER=""
+KBUILD_BUILD_HOST=""
+export KBUILD_BUILD_USER KBUILD_BUILD_HOST
+
 LTO=thin OUT_DIR="$OLDDIR/android-kernel/out" BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh -j"$(nproc)"
 
 OUT_PATH=$(find "$OLDDIR/android-kernel/out" -name "Image" -type f | head -1)

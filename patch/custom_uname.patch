@@ -17,21 +17,26 @@ index cba3411..2f12a57 100644
  
  BUILD_SALT;
 diff --git a/scripts/mkcompile_h b/scripts/mkcompile_h
-index a72b154..414e213 100644
+index a72b154..642c8a0 100644
 --- a/scripts/mkcompile_h
 +++ b/scripts/mkcompile_h
-@@ -30,12 +30,12 @@ else
+@@ -29,16 +29,9 @@ if [ -z "$KBUILD_BUILD_TIMESTAMP" ]; then
+ else
  	TIMESTAMP=$KBUILD_BUILD_TIMESTAMP
  fi
- if test -z "$KBUILD_BUILD_USER"; then
+-if test -z "$KBUILD_BUILD_USER"; then
 -	LINUX_COMPILE_BY=$(whoami | sed 's/\\/\\\\/')
-+	LINUX_COMPILE_BY="tekqshi"
- else
- 	LINUX_COMPILE_BY=$KBUILD_BUILD_USER
- fi
- if test -z "$KBUILD_BUILD_HOST"; then
+-else
+-	LINUX_COMPILE_BY=$KBUILD_BUILD_USER
+-fi
+-if test -z "$KBUILD_BUILD_HOST"; then
 -	LINUX_COMPILE_HOST=`uname -n`
-+	LINUX_COMPILE_HOST="808kernel"
- else
- 	LINUX_COMPILE_HOST=$KBUILD_BUILD_HOST
- fi
+-else
+-	LINUX_COMPILE_HOST=$KBUILD_BUILD_HOST
+-fi
++
++LINUX_COMPILE_BY="tekqshi"
++LINUX_COMPILE_HOST="808kernel"
+ 
+ UTS_VERSION="#$VERSION"
+ CONFIG_FLAGS=""
