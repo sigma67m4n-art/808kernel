@@ -22,10 +22,15 @@ OLDDIR="$(pwd)"
 DEFCONFIG="arch/arm64/configs/gki_defconfig"
 
 sudo apt-get update -qq
-sudo apt-get install -y git repo bc build-essential flex bison libssl-dev libelf-dev ccache dos2unix python3 curl jq zip
+sudo apt-get install -y git bc build-essential flex bison libssl-dev libelf-dev ccache dos2unix python3 curl jq zip
 
 mkdir -p android-kernel
 cd android-kernel
+
+echo "info: cloning latest repo..."
+REPO_DIR="$OLDDIR/android-kernel/repo"
+git clone https://android.googlesource.com/tools/repo.git repo
+export PATH="$REPO_DIR:$PATH"
 
 echo "info: syncing kernel sources... ($KERNEL_BRANCH)"
 repo init --depth=1 -u https://android.googlesource.com/kernel/manifest -b "$KERNEL_BRANCH"
@@ -36,19 +41,15 @@ VERSION=$(awk '/^VERSION/ {print $3}' Makefile)
 PATCHLEVEL=$(awk '/^PATCHLEVEL/ {print $3}' Makefile)
 SUBLEVEL=$(awk '/^SUBLEVEL/ {print $3}' Makefile)
 
-CLANG_DIR="$OLDDIR/android-kernel/clang-stable"
+CLANG_VERSION="r547379" # 20.0.0
+CLANG_DIR="$OLDDIR/android-kernel/clang-$CLANG_VERSION"
 
 if [[ ! -d "$CLANG_DIR" ]]; then
-	echo "info: cloning clang-stable..."
-	git clone --depth=1 \
-		"https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86" \
-		--filter=blob:none \
-		--sparse \
-		"$OLDDIR/android-kernel/clang-repo"
-	cd "$OLDDIR/android-kernel/clang-repo"
-	git sparse-checkout set clang-stable
-	mv clang-stable "$CLANG_DIR"
-	cd "$OLDDIR/android-kernel/common"
+	echo "info: downloading aosp clang $CLANG_VERSION..."
+	wget --progress=bar:force "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/refs/heads/main/clang-$CLANG_VERSION.tar.gz" -O "$OLDDIR/android-kernel/clang-$CLANG_VERSION.tar.gz"
+	mkdir -p "$CLANG_DIR"
+	tar -xzf "$OLDDIR/android-kernel/clang-$CLANG_VERSION.tar.gz" -C "$CLANG_DIR"
+	rm "$OLDDIR/android-kernel/clang-$CLANG_VERSION.tar.gz"
 fi
 
 export PATH="$CLANG_DIR/bin:$PATH"
@@ -60,8 +61,20 @@ for i in "$OLDDIR"/patch/*; do
 done
 
 if [[ -n "$CONFIG_NAME" ]]; then
-	echo "info: applying config..."
-	cat "$OLDDIR/config/$CONFIG_NAME" >>"$DEFCONFIG"
+	echo "info: applying config with override..."
+	while IFS= read -r line; do
+		[[ -z "$line" || "$line" =~ ^# && ! "$line" =~ is\ not\ set ]] && continue
+		if [[ "$line" =~ ^([A-Za-z0-9_]+)= ]]; then
+			key="${BASH_REMATCH[1]}"
+		elif [[ "$line" =~ ^#\ ([A-Za-z0-9_]+)\ is\ not\ set ]]; then
+			key="${BASH_REMATCH[1]}"
+		else
+			continue
+		fi
+		sed -i "/^[#[:space:]]*$key[=[:space:]]/d" "$DEFCONFIG"
+		echo "$line" >> "$DEFCONFIG"
+	done < "$OLDDIR/config/$CONFIG_NAME"
+	echo "info: config applied"
 fi
 
 if [[ -n "$LOCALVERSION" ]]; then
